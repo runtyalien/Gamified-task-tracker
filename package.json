@@ -1,0 +1,46 @@
+{
+  "name": "gamified-task-tracker-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "concurrently \"nodemon server.js\" \"npm run start --prefix frontend\"",
+    "seed": "node scripts/seed.js seed",
+    "seed:clear": "node scripts/seed.js clear",
+    "seed:reset": "node scripts/seed.js reset",
+    "test:api": "node scripts/test-api.js",
+    "validate": "node scripts/validate.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "mongodb",
+    "aws-s3",
+    "gamification",
+    "task-tracker",
+    "rest-api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "Node.js Express MongoDB backend for a gamified task tracker app with AWS S3 integration",
+  "dependencies": {
+    "aws-sdk": "^2.1692.0",
+    "bcryptjs": "^3.0.2",
+    "concurrently": "^9.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.0",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.1",
+    "form-data": "^4.0.3",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.1",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.1"
+  },
+  "devDependencies": {
+    "axios": "^1.10.0",
+    "nodemon": "^3.1.10"
+  }
+}

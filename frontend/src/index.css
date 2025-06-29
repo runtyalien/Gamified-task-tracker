@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  html {
+    font-family: Inter, system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-primary-50 via-white to-secondary-50 min-h-screen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-medium py-3 px-6 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-primary-600 font-medium py-3 px-6 rounded-2xl shadow-md border border-primary-100 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 active:scale-95;
+  }
+  
+  .card {
+    @apply bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 p-6;
+  }
+  
+  .card-gradient {
+    @apply bg-gradient-to-br from-white/90 to-primary-50/50 backdrop-blur-sm rounded-3xl shadow-lg border border-white/30 p-6;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 rounded-2xl border border-primary-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-200/50 transition-all duration-200 bg-white/80;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .badge-success {
+    @apply badge bg-green-100 text-green-800;
+  }
+  
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-800;
+  }
+  
+  .badge-info {
+    @apply badge bg-primary-100 text-primary-800;
+  }
+}
