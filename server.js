@@ -12,9 +12,13 @@ const taskRoutes = require('./src/routes/taskRoutes');
 const progressRoutes = require('./src/routes/progressRoutes');
 const rewardRoutes = require('./src/routes/rewardRoutes');
 const userRoutes = require('./src/routes/userRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
 // Import middleware
 const errorHandler = require('./src/middleware/errorHandler');
+
+// Import daily reset job
+const { initializeDailyResetJob } = require('./src/jobs/dailyResetJob');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +27,7 @@ const PORT = process.env.PORT || 3001;
 app.use(helmet());
 app.use(cors({
   origin: [
+    '*',
     'http://localhost:3000',
     'http://localhost:3001',
     process.env.CORS_ORIGIN || 'http://localhost:3000'
@@ -63,6 +68,8 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -87,6 +94,14 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Initialize daily reset job
+  try {
+    initializeDailyResetJob();
+    console.log('✅ Daily reset system initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize daily reset system:', error);
+  }
 });
 
 module.exports = app;

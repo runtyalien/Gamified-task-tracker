@@ -3,6 +3,7 @@ const TaskSubmission = require('../models/TaskSubmission');
 const Reward = require('../models/Reward');
 const User = require('../models/User');
 const BonusSubmission = require('../models/BonusSubmission');
+const DailyProgress = require('../models/DailyProgress');
 const { validateSubmissionTime, getStartOfDay, getEndOfDay } = require('../utils/dateUtils');
 
 /**
@@ -79,6 +80,20 @@ const submitSubtask = async (userId, taskId, subtaskKey, imageUrl, submittedAt, 
   });
   
   await submission.save();
+  
+  // Update DailyProgress table
+  try {
+    await DailyProgress.markSubtaskCompleted(userId, submissionDate, taskId, subtaskKey, {
+      image_url: imageUrl,
+      presigned_url: presignedUrl,
+      s3_key: s3Key,
+      is_valid: timeValidation.isValid,
+      validation_message: timeValidation.message
+    });
+  } catch (dailyProgressError) {
+    console.log('Daily progress update failed (non-critical):', dailyProgressError.message);
+    // Continue with existing logic - DailyProgress is supplementary
+  }
   
   // Check if all subtasks are completed for this task AND within time limits
   const allSubtaskKeys = task.subtasks.map(st => st.key);
@@ -242,6 +257,7 @@ const issueBonusReward = async (userId, taskId, date, rewardRs, rewardXp, bonusT
 
 /**
  * Get task progress for a specific date
+ * Uses DailyProgress as primary source with TaskSubmission fallback
  * @param {string} userId - User ID
  * @param {Date} date - Target date
  * @returns {Promise<Array>} - Task progress data
@@ -251,6 +267,70 @@ const getTaskProgress = async (userId, date) => {
   
   // Debug logging
   console.log('🔍 getTaskProgress called:', { userId, date: date.toISOString(), targetDate: targetDate.toISOString() });
+  
+  try {
+    // Try to get progress from DailyProgress table first
+    const dailyProgress = await DailyProgress.findOne({
+      user_id: userId,
+      date: targetDate
+    }).populate('task_progress.task_id');
+    
+    if (dailyProgress && dailyProgress.task_progress.length > 0) {
+      console.log('📊 Using DailyProgress data');
+      
+      // Convert DailyProgress format to expected format
+      return dailyProgress.task_progress.map(taskProgress => {
+        const task = taskProgress.task_id;
+        
+        const subtaskProgress = task.subtasks.map(subtask => {
+          const completedSubtask = taskProgress.completed_subtasks.find(
+            cs => cs.subtask_key === subtask.key
+          );
+          
+          return {
+            key: subtask.key,
+            name: subtask.name,
+            time_limit: subtask.time_limit,
+            completed: !!completedSubtask,
+            submission: completedSubtask ? {
+              id: `daily_${dailyProgress._id}_${subtask.key}`,
+              user_id: userId,
+              task_id: task._id,
+              subtask_key: subtask.key,
+              image_url: completedSubtask.image_url,
+              presigned_url: completedSubtask.presigned_url,
+              s3_key: completedSubtask.s3_key,
+              submitted_at: completedSubtask.completed_at,
+              date: targetDate.toISOString(),
+              is_valid: completedSubtask.is_valid,
+              validation_message: completedSubtask.validation_message
+            } : null
+          };
+        });
+        
+        return {
+          task_id: task._id,
+          task_name: task.name,
+          task_key: task.key,
+          description: task.description,
+          reward_rs: task.reward_rs,
+          reward_xp: task.reward_xp,
+          subtasks: subtaskProgress,
+          progress: {
+            completed: taskProgress.completed_subtasks.length,
+            total: task.subtasks.length,
+            percentage: taskProgress.completion_rate
+          },
+          is_completed: taskProgress.is_task_completed,
+          is_reward_eligible: taskProgress.reward_earned
+        };
+      });
+    }
+  } catch (dailyProgressError) {
+    console.log('⚠️ DailyProgress query failed, falling back to TaskSubmission:', dailyProgressError.message);
+  }
+  
+  console.log('📊 Falling back to TaskSubmission data');
   
   // Get all active tasks
   const tasks = await Task.find({ is_active: true });
